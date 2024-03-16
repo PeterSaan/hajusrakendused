@@ -11,6 +11,8 @@ const itemsPerPage = 30;
 let idSearch;
 let nameSearch;
 
+app.use(express.json());
+
 readStream.pipe(csv({ separator: '\t'}))
     .on('data', (data) => parts.push(data))
     .on('end', () => console.log("Parsing done"));
@@ -39,6 +41,14 @@ app.get('/', (req, res) => {
        
     });
 });
+
+app.get('/spare-parts', (req, res) => {
+    parts.filter((e) => {
+        e.name.trim().toUpperCase();
+        e.serialNumber.trim().toUpperCase();
+    });
+    res.send(parts[0]);
+})
 
 app.listen(port, () => {
     console.log(`App listening on port http://localhost:${port}`);
