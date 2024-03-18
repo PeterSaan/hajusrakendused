@@ -6,12 +6,9 @@ const app = express();
 const port = 3000;
 const readStream = createReadStream('../andmed/LE.txt');
 let listOfParts = [];
-let currentPage = 1;
 const itemsPerPage = 30;
-let idSearch;
-let nameSearch;
 
-app.use(express.json({ strict: false }));
+app.use(express.json());
 
 readStream.pipe(csv({ separator: '\t'}))
     .on('data', (data) => listOfParts.push(data))
@@ -21,36 +18,52 @@ readStream.on('error', (err) => {
     console.log(`Error: ${err}`);
 });
 
-app.get('/spare-parts/:name', (req, res) => {
-    nameSearch = req.params.name;
-    idSearch = req.params.id;
+// URL example: https://localhost:3000/spare-parts/name/BMW raamat
+app.get('/spare-parts/name/:name', (req, res) => {
+    const nameSearch = req.params.name;
+    const filteredParts = listOfParts.filter(part => part.name.trim().includes(nameSearch));
 
-    // if (nameSearch) {
-    //     res.write(listOfParts.filter(part => part.name.includes(nameSearch)));
-    // } else if (idSearch) {
-    //     res.write(listOfParts.filter(part => part.serialNumber.includes(idSearch)));
-    // } else if (nameSearch && idSearch) {
-    //     res.write(listOfParts.filter(part => part.name.includes(nameSearch) && part.serialNumber.includes(idSearch)));
-    // } else {
-    //     See pole päris õige, aga siit saad idee
-    //     res.write(listOfParts.slice(startPage, itemsPerPage));
-    // }
+    res.send(JSON.stringify(filteredParts));
+});
+
+// URL example: https://localhost:3000/spare-parts/sn/99999999987
+app.get('/spare-parts/sn/:sn', (req, res) => {
+    const snSearch = req.params.sn;
+    const filteredParts = listOfParts.filter(part => part.serialNumber.trim().includes(snSearch));
+
+    res.send(JSON.stringify(filteredParts));
+});
+
+app.get('/spare-parts/page/:page', (req, res) => {
+    let whichPage = req.params.page;
+    let sliceStart = (whichPage - 1) * itemsPerPage;
+    let sliceEnd = whichPage * itemsPerPage;
     
-    res.write(listOfParts.filter(part => part.name.includes(nameSearch)))
-
-    console.log(nameSearch);
-    console.log(idSearch);
-
-    res.end();
+    res.send(listOfParts.slice(sliceStart, sliceEnd));
 });
 
-app.get('/result', (req, res) => {
+app.get('/spare-parts/sort/:category', (req, res) => {
+    let category = req.params.category;
+    let sortedParts;
 
-});
+    if (category === 'name') {
+        sortedParts = listOfParts.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (category === 'sn') {
+        sortedParts = listOfParts.sort((a, b) => a.serialNumber.localeCompare(b.serialNumber));
+    } else if (category === 'price') {
+        sortedParts = listOfParts.sort((a, b) => a.price - b.price);
+    } else if(category === '-name') {
+        sortedParts = listOfParts.sort((a, b) => b.name.localeCompare(a.name));
+    } else if (category === '-sn') {
+        sortedParts = listOfParts.sort((a, b) => b.serialNumber.localeCompare(a.serialNumber));
+    } else if (category === '-price') {
+        sortedParts = listOfParts.sort((a, b) => b.price - a.price);
+    } else {
+        res.send('Invalid category');
+    }
 
-app.get('/spare-parts', (req, res) => {
-    res.send(listOfParts.slice(0, 10));
-});
+    res.send(JSON.stringify(sortedParts.slice(19000, 19100)));
+})
 
 app.listen(port, () => {
     console.log(`App listening on http://localhost:${port}`);
