@@ -18,23 +18,24 @@ readStream.on('error', (err) => {
     console.log(`Error: ${err}`);
 });
 
-// URL example: https://localhost:3000/spare-parts/name/BMW raamat
-app.get('/spare-parts/name/:name', (req, res) => {
-    const nameSearch = req.params.name;
-    const filteredParts = listOfParts.filter(part => part.name.trim().includes(nameSearch));
+// URL example: http://localhost:3000/name/BMW raamat
+app.get('/name/:name', (req, res) => {
+    let nameSearch = req.params.name;
+    let filteredParts = listOfParts.filter(part => part.name.trim().includes(nameSearch));
 
     res.send(JSON.stringify(filteredParts));
 });
 
-// URL example: https://localhost:3000/spare-parts/sn/99999999987
-app.get('/spare-parts/sn/:sn', (req, res) => {
-    const snSearch = req.params.sn;
-    const filteredParts = listOfParts.filter(part => part.serialNumber.trim().includes(snSearch));
+// URL example: http://localhost:3000/sn/99999999987
+app.get('/sn/:sn', (req, res) => {
+    let snSearch = req.params.sn;
+    let filteredParts = listOfParts.filter(part => part.serialNumber.trim().includes(snSearch));
 
     res.send(JSON.stringify(filteredParts));
 });
 
-app.get('/spare-parts/page/:page', (req, res) => {
+// URL example: http://localhost:3000/page/20
+app.get('/page/:page', (req, res) => {
     let whichPage = req.params.page;
     let sliceStart = (whichPage - 1) * itemsPerPage;
     let sliceEnd = whichPage * itemsPerPage;
@@ -42,28 +43,24 @@ app.get('/spare-parts/page/:page', (req, res) => {
     res.send(listOfParts.slice(sliceStart, sliceEnd));
 });
 
-app.get('/spare-parts/sort/:category', (req, res) => {
+app.get('/sort/:category', (req, res) => {
     let category = req.params.category;
     let sortedParts;
 
-    if (category === 'name') {
+    if (category.trim() === 'name') {
         sortedParts = listOfParts.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (category === 'sn') {
-        sortedParts = listOfParts.sort((a, b) => a.serialNumber.localeCompare(b.serialNumber));
-    } else if (category === 'price') {
-        sortedParts = listOfParts.sort((a, b) => a.price - b.price);
-    } else if(category === '-name') {
+    } else if (category.trim() === 'price') {
+        sortedParts = listOfParts.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+    } else if(category.trim() === '-name') {
         sortedParts = listOfParts.sort((a, b) => b.name.localeCompare(a.name));
-    } else if (category === '-sn') {
-        sortedParts = listOfParts.sort((a, b) => b.serialNumber.localeCompare(a.serialNumber));
-    } else if (category === '-price') {
-        sortedParts = listOfParts.sort((a, b) => b.price - a.price);
+    } else if (category.trim() === '-price') {
+        sortedParts = listOfParts.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
     } else {
         res.send('Invalid category');
     }
 
-    res.send(JSON.stringify(sortedParts.slice(19000, 19100)));
-})
+    res.send(JSON.stringify(sortedParts.slice(0, 1000)));
+});
 
 app.listen(port, () => {
     console.log(`App listening on http://localhost:${port}`);
